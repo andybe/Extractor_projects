@@ -143,6 +143,24 @@ static const char* kWOTLKMPQList[] =
     "%s/lichking-speech-%s.MPQ"
 };
 
+static const char* kCATAMPQList[] =
+{
+    "%s/expansion3-locale-%s.MPQ",
+    "%s/expansion3-speech-%s.MPQ"
+    "expansion3.MPQ",
+    "%s/expansion2-locale-%s.MPQ",
+    "%s/expansion2-speech-%s.MPQ"
+    "expansion2.MPQ",
+    "%s/expansion1-locale-%s.MPQ",
+    "%s/expansion1-speech-%s.MPQ",
+    "expansion1.MPQ",
+    "%s/locale-%s.MPQ",
+    "%s/speech-%s.MPQ",
+    "world.MPQ",
+    "world2.MPQ",
+    "alternate.MPQ",
+    "art.MPQ",
+};
 /**
  * @brief
  *
@@ -239,44 +257,6 @@ bool HandleArgs(int argc, char** argv)
 
     return true;
 
-}
-
-uint32 ReadBuildOldWay(int thisLocale)
-{
-    // include build info file also
-    std::string filename = std::string("component.wow-") + Locales[thisLocale] + ".txt";
-    //printf("Read %s file... ", filename.c_str());
-
-    HANDLE fileHandle{};
-
-    MPQFile m(fileHandle, filename.c_str());
-    if (m.isEof())
-    {
-        printf("Fatal error: Not found %s file!\n", filename.c_str());
-        exit(1);
-    }
-
-    std::string text = m.getPointer();
-    m.close();
-
-    size_t pos = text.find("version=\"");
-    size_t pos1 = pos + strlen("version=\"");
-    size_t pos2 = text.find("\"", pos1);
-    if (pos == text.npos || pos2 == text.npos || pos1 >= pos2)
-    {
-        printf("Fatal error: Invalid  %s file format!\n", filename.c_str());
-        exit(1);
-    }
-
-    std::string build_str = text.substr(pos1, pos2 - pos1);
-
-    int build = atoi(build_str.c_str());
-    if (build <= 0)
-    {
-        printf("Fatal error: Invalid  %s file format!\n", filename.c_str());
-        exit(1);
-    }
-    return build;
 }
 
 void AppendDBCFileListTo(HANDLE mpqHandle, std::set<std::string>& filelist)
@@ -1225,7 +1205,7 @@ void ExtractMapsFromMpq(uint32 build)
         WDT_file wdt;
         if (!wdt.loadFile(mpq_map_name, false))
         {
-            printf("Warning: Failed loading %s map WDT data (This message can be safely ignored)\n", map_ids[z].name);
+            printf("Warning: Failed loading map %s.wdt (This message can be safely ignored)\n", map_ids[z].name);
             continue;
         }
 
@@ -1309,7 +1289,7 @@ void ExtractDBCFiles(int locale, bool basicLocale)
             ++count;
         }
     }
-    printf(" Extracted %u files\n\n", count);
+    printf("Extracted %u DBC/DB2 files\n\n", count);
 }
 
 typedef std::pair < std::string /*full_filename*/, char const* /*locale_prefix*/ > UpdatesPair;
@@ -1366,7 +1346,8 @@ void AppendPatchMPQFilesToList(char const* subdir, char const* suffix, char cons
             {
                 updates[ubuild] = UpdatesPair(ffd.cFileName, section);
             }
-        } while (FindNextFile(hFind, &ffd) != 0);
+        }
+        while (FindNextFile(hFind, &ffd) != 0);
 
         FindClose(hFind);
     }
@@ -1518,6 +1499,10 @@ void LoadCommonMPQFiles(int client)
     case CLIENT_WOTLK:
         count = sizeof(kWOTLKMPQList) / sizeof(char*);
         std::copy(std::begin(kWOTLKMPQList), std::end(kWOTLKMPQList), std::begin(temp));
+        break;
+    case CLIENT_CATA:
+        count = sizeof(kCATAMPQList) / sizeof(char*);
+        std::copy(std::begin(kCATAMPQList), std::end(kCATAMPQList), std::begin(temp));
         break;
     }
 
